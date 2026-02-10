@@ -10,9 +10,13 @@ CREATE TABLE silver.crm_cust_info (
     dwh_create_date      DATETIME Default GETDATE()
 );
 GO
-CREATE TABLE silver.crm_prd_info (
+    IF OBJECT_ID ('silver.crm_prd_info','U') IS NOT NULL
+    DROP Table silver.crm_prd_info;
+    CREATE TABLE silver.crm_prd_info (
     prd_id       INT,
     prd_key      NVARCHAR(50),
+    prd_key_erp  NVARCHAR(50),
+    prd_key_sales NVARCHAR(50),
     prd_name     NVARCHAR(50),
     prd_cost     INT,
     prd_line     NVARCHAR(50),
