@@ -43,3 +43,27 @@ prd_start_date,
 DATEADD(DAY,-1,Lead(prd_start_date) Over(Partition by prd_key order by prd_start_date)) as prd_end_date
 from bronze.crm_prd_details
 
+--Checking for duplicates and null values in sales order number.
+--There are no nulls, but duplicates sales_order_number which show same customer buying different product.
+--Trimming of sales_order_number, sales_prd_key, sales_cust_id.
+--Casting of date which is integer to date hence checking with invalid date in these there are some zero and wrong date in which we put null in these place.
+--Checking price, sales, quantity if it is null, zero, negative and check the relation price*quantity=sales.
+
+Insert Into silver.crm_sales_details(sales_ord_num, sales_prd_key, sales_cust_id, sales_order_date, sales_ship_date, sales_due_date, sales_sls, sales_quantity, sales_price)
+Select Trim(sales_order_number) as sales_order_number, Trim(Sales_prd_key) as sales_prd_key,
+sales_cust_id,
+Case 
+When Len(sales_order_date) = 8 Then Cast(Cast(sales_order_date as NVARCHAR) as DATE)
+Else NULL 
+End as sales_order_number,
+Cast(Cast(sales_ship_date as NVARCHAR) as DATE) as sales_ship_date,
+Cast(Cast(sales_due_date as NVARCHAR) as DATE) as sales_due_date,
+Case When sales_sls is null or sales_sls != Abs(sales_price)*sales_quantity Then Abs(sales_price)*sales_quantity
+     Else sales_sls
+End as sales_sls,
+sales_quantity,
+Case When sales_price is null Then Abs(sales_sls)/sales_quantity
+     Else Abs(sales_price)
+End as sales_price
+from bronze.crm_sales_details
+
