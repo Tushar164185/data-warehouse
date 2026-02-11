@@ -67,3 +67,57 @@ Case When sales_price is null Then Abs(sales_sls)/sales_quantity
 End as sales_price
 from bronze.crm_sales_details
 
+-- Cleaning bronze.erp_cust data and inserting into silver.erp_cust
+Insert Into silver.erp_cust(cust_id, birth_date, gen)
+Select -- Correcting it for cust_id and trim 
+Case 
+When Trim(cust_id) Like 'NAS%' Then Substring(Trim(cust_id),4) 
+Else Trim(cust_id)
+End as cust_id,
+-- Checking that every customer is birthdate less than today's date
+Case
+When cust_birth_date >= GETDATE() Then NULL
+Else cust_birth_date
+End as birth_date,
+-- Handling null and empty values
+Case 
+When cust_gender IN ('M','Male') Then 'Male'
+When cust_gender IN ('F','Female') Then 'Female'
+Else null
+End as cust_gender
+from bronze.erp_cust
+
+-- Insert bronze.erp_prd after cleaning into silver.erp_prd
+Insert Into Silver.erp_prd(id, category, sub_category, maintenance)
+Select -- Handling id in required format for crm.prd_details
+Replace(Trim(id),'-','_') as id,
+-- Replace blank spaces with null
+Case 
+When Trim(category) = '' Then NULL
+Else Trim(category)
+End as category,
+-- Replace blank spaces with null
+Case 
+When Trim(sub_category) = '' Then NULL
+Else Trim(sub_category)
+End as sub_category,
+-- Replace blank spaces with null
+Case 
+When Trim(maintenance) = '' Then NULL
+Else Upper(Trim(maintenance))
+End as maintenance
+from bronze.erp_prd;
+
+-- Insert bronze.erp_loc after cleaning into silver.erp_loc
+Insert Into silver.erp_loc(cust_id, country)
+Select -- Handling it for crm_cust_info
+Replace(Trim(id),'-','') as id,
+-- Handling blank spaces and normalizing the country names.
+Case 
+When country = 'DE' THEN 'Denmark'
+When Country in ('USA', 'US', 'United States') Then 'United States of America'
+When Trim(country) = '' Then NULL
+Else Trim(country)
+End as country
+from bronze.erp_loc
+
