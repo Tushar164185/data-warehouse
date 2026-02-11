@@ -25,18 +25,19 @@ GO
     dwh_create_date DATETIME Default GETDATE()
 );
 GO
+If OBJECT_ID ('silver.crm_sales_details','U') is not null
+Drop Table silver.crm_sales_details;
 CREATE TABLE silver.crm_sales_details (
     sales_ord_num  NVARCHAR(50),
     sales_prd_key  NVARCHAR(50),
     sales_cust_id  INT,
-    sales_order_date INT,
-    sales_ship_date  INT,
-    sales_due_date   INT,
+    sales_order_date DATE,
+    sales_ship_date  DATE,
+    sales_due_date   DATE,
     sales_sls   INT,
     sales_quantity INT,
     sales_price    INT,
-    dwh_create_date  DATETIME Default GETDATE()
-);
+    dwh_create_date  DATETIME Default GETDATE());
 GO
 CREATE TABLE silver.erp_loc (
     cust_id    NVARCHAR(50),
