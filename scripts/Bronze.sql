@@ -1,3 +1,4 @@
+-- It is an stored procedure for loading data from source(raw) into sql bronze layer.
 Create Or Alter Procedure bronze.load_layer as 
 Begin
 Declare @starttime DATETIME, @endtime DATETIME;
