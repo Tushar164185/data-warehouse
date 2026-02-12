@@ -1,4 +1,10 @@
+-- It is an stored procedure for silver layer in which it automatically cleans data from the bronze layer and load into silver layer.
+Create Or Alter Procedure Silver_layer As
+Declare @Starttime DATETIME, @endtime DATETIME
+Begin
+Set @Starttime = GetDate();
 -- Cleaning and inserting crm_cust_info data into Silver layer crm_cust-info.
+Truncate Table silver.crm_cust_info;
 Insert Into silver.crm_cust_info(cust_id, cust_key, cust_firstname, cust_lastname, cust_marital_status, cust_gender, cust_create_date) 
 Select cust_id,
 -- Deleting all the trailing and leading white space
@@ -21,6 +27,7 @@ where cust_id is not null) as r
 where Rank = 1
 
 -- Cleaning bronze.crm_prd_details and Inserting into silver layer crm_prd_info
+Truncate Table silver.crm_prd_info;
 Insert Into silver.crm_prd_info(prd_id, prd_key, prd_key_erp, prd_key_sales, prd_name, prd_cost, prd_line, prd_start_date, prd_end_date)
 Select prd_id,
 -- Deleting trailing and leading blank spaces
@@ -48,7 +55,7 @@ from bronze.crm_prd_details
 --Trimming of sales_order_number, sales_prd_key, sales_cust_id.
 --Casting of date which is integer to date hence checking with invalid date in these there are some zero and wrong date in which we put null in these place.
 --Checking price, sales, quantity if it is null, zero, negative and check the relation price*quantity=sales.
-
+Truncate Table silver.crm_sales_details;
 Insert Into silver.crm_sales_details(sales_ord_num, sales_prd_key, sales_cust_id, sales_order_date, sales_ship_date, sales_due_date, sales_sls, sales_quantity, sales_price)
 Select Trim(sales_order_number) as sales_order_number, Trim(Sales_prd_key) as sales_prd_key,
 sales_cust_id,
@@ -68,6 +75,7 @@ End as sales_price
 from bronze.crm_sales_details
 
 -- Cleaning bronze.erp_cust data and inserting into silver.erp_cust
+Truncate Table silver.erp_cust;
 Insert Into silver.erp_cust(cust_id, birth_date, gen)
 Select -- Correcting it for cust_id and trim 
 Case 
@@ -88,6 +96,7 @@ End as cust_gender
 from bronze.erp_cust
 
 -- Insert bronze.erp_prd after cleaning into silver.erp_prd
+Truncate Table silver.erp_prd;
 Insert Into Silver.erp_prd(id, category, sub_category, maintenance)
 Select -- Handling id in required format for crm.prd_details
 Replace(Trim(id),'-','_') as id,
@@ -109,6 +118,7 @@ End as maintenance
 from bronze.erp_prd;
 
 -- Insert bronze.erp_loc after cleaning into silver.erp_loc
+Truncate Table silver.erp_loc;
 Insert Into silver.erp_loc(cust_id, country)
 Select -- Handling it for crm_cust_info
 Replace(Trim(id),'-','') as id,
@@ -120,4 +130,6 @@ When Trim(country) = '' Then NULL
 Else Trim(country)
 End as country
 from bronze.erp_loc
-
+Set @endtime = GETDATE();
+Print 'Time taken for completion ' + Cast(DATEDIFF(Second,@Starttime,@endtime) as NVARCHAR) + 'seconds'
+End
